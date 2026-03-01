@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Readiness Quiz | puzzle.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #F9FAFB;
+      color: #111827;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ─────────────────────────────────────────── */
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.25rem;
+    }
+    .inner { width: 100%; max-width: 720px; }
+
+    /* ── Screens ─────────────────────────────────────────── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Fade animation ──────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.3s ease both; }
+
+    /* ── Intro ───────────────────────────────────────────── */
+    .intro { text-align: center; padding: 5rem 0; }
+
+    .badge {
+      display: inline-block;
+      background: #F3E8FF;
+      color: #9333EA;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    .intro h1 {
+      font-size: clamp(2.25rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      color: #111827;
+    }
+
+    .intro-sub {
+      font-size: 1rem;
+      color: #6B7280;
+      max-width: 400px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      display: inline-block;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: background 0.18s, opacity 0.18s, border-color 0.18s;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-green {
+      background: #00FF94;
+      color: #000;
+      padding: 0.9rem 2.5rem;
+    }
+    .btn-green:hover:not(:disabled) { background: #00E085; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #374151;
+      border: 1.5px solid #D1D5DB;
+      padding: 0.75rem 1.75rem;
+    }
+    .btn-ghost:hover:not(:disabled) { background: #F3F4F6; }
+
+    .btn-outline-purple {
+      background: transparent;
+      color: #9333EA;
+      border: 2px solid #E9D5FF;
+      padding: 0.9rem 1.5rem;
+    }
+    .btn-outline-purple:hover { background: #FAF5FF; }
+
+    /* ── Progress ────────────────────────────────────────── */
+    .progress-wrap { margin-bottom: 1.5rem; }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #6B7280;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .progress-track {
+      width: 100%;
+      height: 5px;
+      background: #E5E7EB;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #00FF94;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* ── Question Card ───────────────────────────────────── */
+    .card {
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      border-radius: 1.25rem;
+      padding: 2.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .q-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9333EA;
+      margin-bottom: 0.6rem;
+    }
+    .q-title {
+      font-size: clamp(1.25rem, 3vw, 1.6rem);
+      font-weight: 700;
+      line-height: 1.35;
+      color: #111827;
+      margin-bottom: 0.4rem;
+    }
+    .q-note {
+      font-size: 0.8rem;
+      color: #9CA3AF;
+      margin-bottom: 1.5rem;
+    }
+    .q-note:empty { display: none; }
+
+    /* ── Options ─────────────────────────────────────────── */
+    .options { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.5rem; }
+
+    .opt-btn {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: #fff;
+      border: 2px solid #E5E7EB;
+      border-radius: 0.875rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: #374151;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .opt-btn:hover { border-color: #C4B5FD; }
+    .opt-btn.selected {
+      border-color: #00FF94;
+      background: #F0FDF4;
+    }
+    .opt-btn.selected .opt-id { color: #059669; }
+    .opt-btn.selected .opt-text { color: #111827; font-weight: 600; }
+
+    .opt-id {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #9CA3AF;
+      min-width: 1.1rem;
+      padding-top: 0.05rem;
+    }
+    .opt-text { flex: 1; line-height: 1.5; }
+
+    /* ── Navigation ──────────────────────────────────────── */
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ── Results ─────────────────────────────────────────── */
+    .results-badge {
+      display: inline-block;
+      background: #F3E8FF;
+      color: #9333EA;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .results-headline {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 0.75rem;
+    }
+    .results-desc {
+      font-size: 0.95rem;
+      color: #6B7280;
+      line-height: 1.75;
+      margin-bottom: 1.75rem;
+    }
+
+    .metrics-box {
+      background: #F9FAFB;
+      border-radius: 0.875rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem;
+    }
+    .metrics-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #374151;
+      margin-bottom: 0.875rem;
+    }
+    .metrics-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .metrics-list li { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.875rem; color: #374151; line-height: 1.5; }
+    .check { color: #00CC77; font-weight: 700; font-size: 0.95rem; margin-top: 0.05rem; flex-shrink: 0; }
+
+    .cta-row {
+      display: flex;
+      gap: 0.875rem;
+      flex-wrap: wrap;
+    }
+    .cta-row .btn { flex: 1; min-width: 180px; padding: 0.9rem 1.25rem; }
+
+    .retake {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    .retake a {
+      font-size: 0.8rem;
+      color: #9CA3AF;
+      text-decoration: none;
+    }
+    .retake a:hover { color: #6B7280; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .card { padding: 1.75rem 1.25rem; }
+      .cta-row { flex-direction: column; }
+      .cta-row .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="inner">
+
+    <!-- ── INTRO ─────────────────────────────────────────── -->
+    <div id="screen-intro" class="screen active">
+      <div class="intro fade-up">
+        <div class="badge">AI Readiness Assessment</div>
+        <h1>Where Does Your<br>Firm Stand?</h1>
+        <p class="intro-sub">Built for firm leaders who want clarity on structure, capacity, and growth.</p>
+        <button class="btn btn-green" onclick="startQuiz()">Start the Assessment</button>
+      </div>
+    </div>
+
+    <!-- ── QUIZ ──────────────────────────────────────────── -->
+    <div id="screen-quiz" class="screen">
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span id="prog-label">Question 1 of 7</span>
+          <span id="prog-pct">14% complete</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="prog-fill" style="width:14%"></div>
+        </div>
+      </div>
+
+      <div class="card fade-up" id="q-card">
+        <div class="q-label" id="q-label"></div>
+        <div class="q-title" id="q-title"></div>
+        <div class="q-note"  id="q-note"></div>
+        <ul class="options"  id="q-options"></ul>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn btn-ghost" id="btn-back" onclick="goBack()" disabled>Back</button>
+        <button class="btn btn-green" id="btn-next" onclick="goNext()" disabled>Next Question</button>
+      </div>
+    </div>
+
+    <!-- ── RESULTS ────────────────────────────────────────── -->
+    <div id="screen-results" class="screen">
+      <div class="card fade-up">
+        <div class="results-badge" id="r-tier"></div>
+        <div class="results-headline" id="r-headline"></div>
+        <p class="results-desc" id="r-desc"></p>
+        <div class="metrics-box">
+          <div class="metrics-title">What this means for your firm:</div>
+          <ul class="metrics-list" id="r-metrics"></ul>
+        </div>
+        <div class="cta-row">
+          <button class="btn btn-green"          id="r-cta1"></button>
+          <button class="btn btn-outline-purple" id="r-cta2"></button>
+        </div>
+      </div>
+      <div class="retake"><a href="#" onclick="retake();return false;">Retake Assessment</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── Data ──────────────────────────────────────────────── */
+const QUESTIONS = [
+  {
+    label: "Close Timing",
+    title: "It's the 15th of the month. Where are you?",
+    note: "",
+    options: [
+      { id:"A", text:"Avoiding Slack — something is probably wrong",        score:0 },
+      { id:"B", text:"Still reconciling prior month activity",               score:0 },
+      { id:"C", text:"Finalizing cleanup and adjusting entries",             score:0 },
+      { id:"D", text:"Reviewing flagged exceptions",                         score:1 },
+      { id:"E", text:"Closed and reviewing performance",                     score:1 }
+    ]
+  },
+  {
+    label: "Value Positioning",
+    title: "What do clients rely on you for most?",
+    note: "Select the one that best describes your firm today.",
+    options: [
+      { id:"A", text:"Cleanup and corrections",                              score:0 },
+      { id:"B", text:"Monthly reporting and Q&A",                           score:0 },
+      { id:"C", text:"Pre-decision sanity checks",                          score:1 },
+      { id:"D", text:"Strategic planning and growth decisions",              score:1 }
+    ]
+  },
+  {
+    label: "Talent & Capacity",
+    title: "How is your strongest senior accountant spending most of their time?",
+    note: "",
+    options: [
+      { id:"A", text:"Primarily on manual data entry and reconciliation",    score:0 },
+      { id:"B", text:"Mostly on review and cleanup tasks",                   score:0 },
+      { id:"C", text:"Focused on higher-value advisory and analysis",        score:1 },
+      { id:"D", text:"Leading strategic conversations directly with clients",score:1 }
+    ]
+  },
+  {
+    label: "AI Readiness",
+    title: "When a vendor says \u201CAI-powered,\u201D you think:",
+    note: "",
+    options: [
+      { id:"A", text:"That likely means more validation for our team",       score:0 },
+      { id:"B", text:"It may help, but we\u2019ll still review everything",  score:0 },
+      { id:"C", text:"Useful if it supports structured human oversight",     score:1 },
+      { id:"D", text:"Only valuable if it improves margin and control",      score:1 }
+    ]
+  },
+  {
+    label: "Client Retention",
+    title: "As clients grow, do they hire an internal accounting team and reduce your scope?",
+    note: "",
+    options: [
+      { id:"A", text:"Frequently",   score:0 },
+      { id:"B", text:"Occasionally", score:0 },
+      { id:"C", text:"Rarely",       score:1 },
+      { id:"D", text:"Almost never", score:1 }
+    ]
+  },
+  {
+    label: "Tech Stack",
+    title: "How would you describe your tech stack?",
+    note: "",
+    options: [
+      { id:"A", text:"Overlapping tools with manual workarounds", score:0 },
+      { id:"B", text:"Functional but fragile",                    score:0 },
+      { id:"C", text:"Integrated and simplified",                 score:1 },
+      { id:"D", text:"Built for speed and scale",                 score:1 }
+    ]
+  },
+  {
+    label: "Responsiveness",
+    title: "A client needs a full variance analysis by tomorrow. You:",
+    note: "",
+    options: [
+      { id:"A", text:"Reprioritize quickly to assemble the analysis",     score:0 },
+      { id:"B", text:"Clear time and deliver with some manual effort",    score:0 },
+      { id:"C", text:"Deliver confidently using structured reporting",    score:1 },
+      { id:"D", text:"Already have visibility into the drivers",          score:1 }
+    ]
+  }
+];
+
+const RESULTS = [
+  {
+    tier: "Cleanup Mode",
+    min: 0, max: 1,
+    headline: "Your firm is operating in Cleanup Mode.",
+    desc: "A significant portion of your team\u2019s capacity is tied to remediation rather than prevention. The opportunity is substantial. Firms at this stage often see the fastest ROI when cleanup is reduced and structure improves.",
+    metrics: [
+      "Estimated time savings: 10\u201315 hours/week per senior accountant",
+      "Potential margin improvement: 15\u201325%",
+      "Client capacity increase: 20\u201340% without new hires"
+    ],
+    cta1: "Download the AI Readiness Playbook",
+    cta2: "Book a Consultation"
+  },
+  {
+    tier: "Efficiency Opportunity",
+    min: 2, max: 3,
+    headline: "You have systems\u2014but they rely on effort.",
+    desc: "Your firm functions well, but performance depends heavily on manual oversight and individual effort. Strengthening structure can protect capacity and reduce fragility.",
+    metrics: [
+      "Estimated time savings: 8\u201312 hours/week per senior accountant",
+      "Potential margin improvement: 12\u201320%",
+      "Client capacity increase: 15\u201330% without new hires"
+    ],
+    cta1: "Download the Playbook",
+    cta2: "Book a Consultation"
+  },
+  {
+    tier: "Efficiency Builder",
+    min: 4, max: 5,
+    headline: "You\u2019re building leverage\u2014with room to expand.",
+    desc: "Your firm has solid systems and meaningful capacity. The next step is reducing remaining friction and scaling advisory without proportional cost increases.",
+    metrics: [
+      "Estimated time savings: 5\u20138 hours/week per senior accountant",
+      "Potential margin improvement: 8\u201315%",
+      "Client capacity increase: 10\u201320% without new hires"
+    ],
+    cta1: "Download the Playbook",
+    cta2: "Book a Consultation"
+  },
+  {
+    tier: "Efficiency Leader",
+    min: 6, max: 99,
+    headline: "Your firm operates with structural leverage.",
+    desc: "You close quickly, protect talent capacity, and deliver strategic value consistently. Your systems support scale without proportional hiring.",
+    metrics: [
+      "Close timing: 2\u20134 days",
+      "Strong client-to-accountant leverage",
+      "Advisory positioned as core offering"
+    ],
+    cta1: "Book a Consultation",
+    cta2: "Download the Playbook"
+  }
+];
+
+/* ── State ─────────────────────────────────────────────── */
+let cur = 0;
+const answers = {};   // { questionIndex: score }
+const chosen  = {};   // { questionIndex: optionId }
+
+/* ── Helpers ───────────────────────────────────────────── */
+function show(id) {
+  ['screen-intro','screen-quiz','screen-results'].forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove('active');
+    el.querySelector('.fade-up') && el.querySelector('.fade-up').classList.remove('fade-up');
+  });
+  const target = document.getElementById(id);
+  target.classList.add('active');
+  // re-trigger animation
+  setTimeout(() => {
+    const fu = target.querySelector('[class*="fade-up"], .card, .intro');
+    if (fu) { fu.classList.remove('fade-up'); void fu.offsetWidth; fu.classList.add('fade-up'); }
+  }, 10);
+}
+
+/* ── Quiz flow ─────────────────────────────────────────── */
+function startQuiz() {
+  cur = 0;
+  show('screen-quiz');
+  render();
+}
+
+function render() {
+  const q   = QUESTIONS[cur];
+  const pct = Math.round(((cur + 1) / QUESTIONS.length) * 100);
+
+  document.getElementById('prog-label').textContent = `Question ${cur + 1} of ${QUESTIONS.length}`;
+  document.getElementById('prog-pct').textContent   = `${pct}% complete`;
+  document.getElementById('prog-fill').style.width  = `${pct}%`;
+
+  document.getElementById('q-label').textContent = q.label;
+  document.getElementById('q-title').textContent = q.title;
+  document.getElementById('q-note').textContent  = q.note || '';
+
+  const list = document.getElementById('q-options');
+  list.innerHTML = '';
+  q.options.forEach(opt => {
+    const li  = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (chosen[cur] === opt.id ? ' selected' : '');
+    btn.innerHTML = `<span class="opt-id">${opt.id}.</span><span class="opt-text">${opt.text}</span>`;
+    btn.onclick = () => pick(opt.id, opt.score);
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+
+  document.getElementById('btn-back').disabled = cur === 0;
+  document.getElementById('btn-next').disabled = answers[cur] === undefined;
+  document.getElementById('btn-next').textContent =
+    cur === QUESTIONS.length - 1 ? 'See Results' : 'Next Question';
+}
+
+function pick(optId, score) {
+  chosen[cur]  = optId;
+  answers[cur] = score;
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('btn-next').disabled = false;
+}
+
+function goNext() {
+  if (answers[cur] === undefined) return;
+  if (cur < QUESTIONS.length - 1) { cur++; render(); }
+  else showResults();
+}
+
+function goBack() {
+  if (cur > 0) { cur--; render(); }
+}
+
+function showResults() {
+  const total  = Object.values(answers).reduce((s, v) => s + v, 0);
+  const result = RESULTS.find(r => total >= r.min && total <= r.max) || RESULTS[0];
+
+  document.getElementById('r-tier').textContent     = result.tier;
+  document.getElementById('r-headline').textContent = result.headline;
+  document.getElementById('r-desc').textContent     = result.desc;
+
+  const ml = document.getElementById('r-metrics');
+  ml.innerHTML = '';
+  result.metrics.forEach(m => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="check">&#10003;</span><span>${m}</span>`;
+    ml.appendChild(li);
+  });
+
+  document.getElementById('r-cta1').textContent = result.cta1;
+  document.getElementById('r-cta2').textContent = result.cta2;
+
+  show('screen-results');
+}
+
+function retake() {
+  cur = 0;
+  Object.keys(answers).forEach(k => delete answers[k]);
+  Object.keys(chosen).forEach(k  => delete chosen[k]);
+  show('screen-intro');
+}
+</script>
+</body>
+</html>
